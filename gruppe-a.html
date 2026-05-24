@@ -52,32 +52,62 @@
     margin-bottom: 28px;
   }
 
-  .anchor-box {
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(20px, 5vw, 26px);
+    line-height: 1.3;
+    margin-bottom: 28px;
+    font-weight: 400;
+  }
+
+  .question-block {
+    margin-bottom: 36px;
+  }
+
+  .q-label {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  .toggle-row {
+    display: flex;
+    gap: 12px;
+  }
+
+  .toggle-btn {
+    flex: 1;
     background: #0f1117;
     border: 1px solid var(--border);
-    border-left: 3px solid var(--accent);
-    border-radius: 10px;
-    padding: 16px 20px;
-    margin-bottom: 32px;
-  }
-
-  .anchor-box p {
-    font-size: 13px;
+    border-radius: 12px;
+    padding: 16px 12px;
+    font-size: 15px;
+    font-family: 'DM Sans', sans-serif;
     color: var(--muted);
-    line-height: 1.6;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    width: auto;
   }
 
-  .anchor-box strong {
+  .toggle-btn:hover {
+    border-color: var(--accent);
     color: var(--text);
+  }
+
+  .toggle-btn.selected {
+    background: #c8f06018;
+    border-color: var(--accent);
+    color: var(--accent);
     font-weight: 500;
   }
 
-  h1 {
-    font-family: 'DM Serif Display', serif;
-    font-size: clamp(22px, 5vw, 28px);
-    line-height: 1.3;
-    margin-bottom: 32px;
-    font-weight: 400;
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 32px 0;
   }
 
   .input-wrap {
@@ -102,9 +132,7 @@
   input[type="number"]::-webkit-inner-spin-button,
   input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
 
-  input[type="number"]:focus {
-    border-color: var(--accent);
-  }
+  input[type="number"]:focus { border-color: var(--accent); }
 
   .unit {
     position: absolute;
@@ -116,7 +144,7 @@
     pointer-events: none;
   }
 
-  button {
+  .submit-btn {
     width: 100%;
     background: var(--accent);
     color: #0f1117;
@@ -130,9 +158,16 @@
     transition: opacity 0.2s, transform 0.1s;
   }
 
-  button:hover { opacity: 0.9; }
-  button:active { transform: scale(0.98); }
-  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .submit-btn:hover { opacity: 0.9; }
+  .submit-btn:active { transform: scale(0.98); }
+  .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .error {
+    color: #f87171;
+    font-size: 13px;
+    margin-top: 8px;
+    display: none;
+  }
 
   .thanks {
     display: none;
@@ -142,34 +177,37 @@
 
   .thanks .big { font-family: 'DM Serif Display', serif; font-size: 36px; margin-bottom: 12px; }
   .thanks .sub { color: var(--muted); font-size: 14px; line-height: 1.6; }
-
-  .error {
-    color: #f87171;
-    font-size: 13px;
-    margin-top: 8px;
-    display: none;
-  }
 </style>
 </head>
 <body>
+
 <div class="card" id="form-card">
   <div class="label">Gruppe A · Schätzaufgabe</div>
 
-  <div class="anchor-box">
-    <p>Zur Orientierung: Die Einwohnerzahl von Kasachstan ist<br>
-    <strong>größer oder kleiner als 5 Millionen?</strong></p>
+  <!-- Question 1: anchor confirmation, not saved -->
+  <div class="question-block">
+    <h1>Hat Kasachstan mehr oder weniger als 5 Millionen Einwohner?</h1>
+    <div class="q-label">Deine Einschätzung</div>
+    <div class="toggle-row">
+      <div class="toggle-btn" id="btn-more" onclick="selectToggle('more')">Mehr als 5 Mio</div>
+      <div class="toggle-btn" id="btn-less" onclick="selectToggle('less')">Weniger als 5 Mio</div>
+    </div>
   </div>
 
-  <h1>Wie viele Millionen Einwohner hat Kasachstan?</h1>
+  <hr class="divider">
 
-  <div class="input-wrap">
-    <input type="number" id="answer" placeholder="z.B. 12" min="0" max="500" step="0.1">
-    <span class="unit">Millionen</span>
+  <!-- Question 2: actual estimate, saved -->
+  <div class="question-block">
+    <h1>Wie viele Millionen Einwohner hat Kasachstan?</h1>
+    <div class="q-label">Deine Schätzung</div>
+    <div class="input-wrap">
+      <input type="number" id="answer" placeholder="z.B. 12" min="0" max="500" step="0.1">
+      <span class="unit">Millionen</span>
+    </div>
   </div>
 
-  <p class="error" id="error-msg">Bitte eine Zahl eingeben.</p>
-
-  <button id="submit-btn" onclick="submit()">Absenden →</button>
+  <p class="error" id="error-msg">Bitte beantworte beide Fragen.</p>
+  <button class="submit-btn" id="submit-btn" onclick="submitForm()">Absenden →</button>
 </div>
 
 <div class="card thanks" id="thanks-card">
@@ -178,19 +216,24 @@
 </div>
 
 <script>
-  // ── CONFIG ──────────────────────────────────────────────
-  // Trage hier deinen JSONBin Bin-ID und API-Key ein (siehe README)
   const BIN_ID  = '6a12f9386877513b27c54776';
   const API_KEY = '$2a$10$Pfixh29GMyIuRA4VTLizbOpyiL.jtD9/TpGnnITpjwAAW.dp0fG/S';
   const GROUP   = 'A';
-  // ────────────────────────────────────────────────────────
 
-  async function submit() {
+  let toggleSelected = null;
+
+  function selectToggle(val) {
+    toggleSelected = val;
+    document.getElementById('btn-more').classList.toggle('selected', val === 'more');
+    document.getElementById('btn-less').classList.toggle('selected', val === 'less');
+  }
+
+  async function submitForm() {
     const val = parseFloat(document.getElementById('answer').value);
     const err = document.getElementById('error-msg');
     const btn = document.getElementById('submit-btn');
 
-    if (isNaN(val) || val <= 0) {
+    if (!toggleSelected || isNaN(val) || val <= 0) {
       err.style.display = 'block';
       return;
     }
@@ -199,17 +242,14 @@
     btn.textContent = 'Wird gespeichert…';
 
     try {
-      // 1. Aktuelle Daten lesen
       const getRes = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
         headers: { 'X-Master-Key': API_KEY }
       });
       const getData = await getRes.json();
       const current = getData.record || { A: [], B: [] };
 
-      // 2. Eigenen Wert hinzufügen
       current[GROUP].push(val);
 
-      // 3. Zurückschreiben
       await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
         method: 'PUT',
         headers: {
